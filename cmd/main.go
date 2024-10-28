@@ -2,8 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
+
+type Sd struct {
+	Vals []int `json:"sdVals"`
+}
 
 func main() {
 	http.HandleFunc("/api/solver", func(w http.ResponseWriter, r *http.Request) {
@@ -15,6 +20,19 @@ func main() {
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
+		}
+
+		if r.Method == "POST" {
+			var sd Sd
+			decoder := json.NewDecoder(r.Body)
+			err := decoder.Decode(&sd)
+			if err != nil {
+				http.Error(w, "Could not decode JSON", http.StatusBadRequest)
+				return
+			}
+			defer r.Body.Close()
+
+			fmt.Println(sd.Vals)
 		}
 
 		msg := map[string]string{"message": "Hello from the solver"}
