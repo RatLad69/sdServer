@@ -4,11 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 )
 
 type Sd struct {
 	Vals []int `json:"sdVals"`
 	Size int   `json:"size"`
+}
+
+type SdMsg struct {
+	Vals []int  `json:"sdVals"`
+	Size int    `json:"size"`
+	Msg  string `json:"msg"`
 }
 
 func splitSd(sd Sd) [][]int {
@@ -21,6 +28,12 @@ func splitSd(sd Sd) [][]int {
 	}
 
 	return valSquare
+}
+
+func joinSd(sq [][]int) Sd {
+	sdSize := len(sq)
+	sdVals := slices.Concat(sq...)
+	return Sd{Vals: sdVals, Size: sdSize}
 }
 
 func isLegalPlacement(sd [][]int, col int, row int, val int) bool {
@@ -101,15 +114,15 @@ func main() {
 			sdSquare := splitSd(sd)
 			fmt.Println(sdSquare)
 			fmt.Println("-------")
+			var sdResponse SdMsg
 			if sdSolve(&sdSquare, sd.Size, 0, 0) {
 				fmt.Println(sdSquare)
+				sdResponse = SdMsg{Vals: joinSd(sdSquare).Vals, Size: sd.Size, Msg: "Solved"}
 			} else {
-				fmt.Println("Failed to solve")
+				sdResponse = SdMsg{Vals: sd.Vals, Size: sd.Size, Msg: "Failed to solve"}
 			}
+			json.NewEncoder(w).Encode(sdResponse)
 		}
-
-		msg := map[string]string{"message": "Hello from the solver"}
-		json.NewEncoder(w).Encode(msg)
 	})
 
 	http.ListenAndServe("localhost:8989", nil)
